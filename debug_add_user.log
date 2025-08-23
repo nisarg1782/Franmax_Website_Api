@@ -1,0 +1,88 @@
+--- 2025-08-06 16:36:57 --- Raw Input:
+{"name":"Nisarg Trivedi","email":"nisargt1782@gmail.com","password":"nisu@1782","status":"active"}
+Decoded Data (Success):
+Array
+(
+    [name] => Nisarg Trivedi
+    [email] => nisargt1782@gmail.com
+    [password] => nisu@1782
+    [status] => active
+)
+
+--- 2025-08-06 16:36:58 --- Raw Input:
+{"name":"Nisarg Trivedi","email":"nisargt1782@gmail.com","password":"nisu@1782","status":"active"}
+Decoded Data (Success):
+Array
+(
+    [name] => Nisarg Trivedi
+    [email] => nisargt1782@gmail.com
+    [password] => nisu@1782
+    [status] => active
+)
+
+--- 2025-08-06 16:39:49 --- Raw Input:
+{"name":"vipul","email":"virupatel2204@gmail.com","password":"vipul@7890","status":"active"}
+Decoded Data (Success):
+Array
+(
+    [name] => vipul
+    [email] => virupatel2204@gmail.com
+    [password] => vipul@7890
+    [status] => active
+)
+
+--- 2025-08-06 16:39:49 --- Raw Input:
+{"name":"vipul","email":"virupatel2204@gmail.com","password":"vipul@7890","status":"active"}
+Decoded Data (Success):
+Array
+(
+    [name] => vipul
+    [email] => virupatel2204@gmail.com
+    [password] => vipul@7890
+    [status] => active
+)
+
+--- 2025-08-06 16:41:48 --- Raw Input:
+{"name":"abab","email":"abc@gmail.com","password":"abc","status":"active"}
+Decoded Data (Success):
+Array
+(
+    [name] => abab
+    [email] => abc@gmail.com
+    [password] => abc
+    [status] => active
+)
+
+--- 2025-08-06 16:41:49 --- Raw Input:
+{"name":"abab","email":"abc@gmail.com","password":"abc","status":"active"}
+Decoded Data (Success):
+Array
+(
+    [name] => abab
+    [email] => abc@gmail.com
+    [password] => abc
+    [status] => active
+)
+
+--- 2025-08-06 16:43:31 --- Raw Input:
+{"name":"sjdbjdjh","email":"jdhsjdhjshd@gmail.com","password":"shg","status":"active"}
+Decoded Data (Success):
+Array
+(
+    [name] => sjdbjdjh
+    [email] => jdhsjdhjshd@gmail.com
+    [password] => shg
+    [status] => active
+)
+
+--- 2025-08-06 16:43:32 --- Raw Input:
+{"name":"sjdbjdjh","email":"jdhsjdhjshd@gmail.com","password":"shg","status":"active"}
+Decoded Data (Success):
+Array
+(
+    [name] => sjdbjdjh
+    [email] => jdhsjdhjshd@gmail.com
+    [password] => shg
+    [status] => active
+)
+

@@ -1,0 +1,48 @@
+[2025-08-12 17:16:32] Data received:
+Array
+(
+    [id] => 4
+    [name] => nisarg
+    [email] => nisargt1782@gmail.com
+    [mobile] => 6359564159
+    [address] => sdsdsds
+    [description] => sddsdsdsd
+    [bd_manager_name] => 
+    [bd_manager_email] => 
+    [bd_manager_contact] => 
+    [state_id] => 1
+    [city_id] => 1
+    [mas_cat_id] => 3
+    [cat_id] => 
+    [sub_cat_id] => 
+    [commenced_operations_year] => 
+    [expansion_started_year] => 
+    [total_outlets] => 
+    [company_owned_outlets] => 
+    [franchise_owned_outlets] => 
+    [is_agreement_renewable] => 
+    [operations_manual_provided] => 
+    [training_provided] => 
+    [it_systems_included] => 
+    [marketing_materials_provided] => 
+    [head_office_assistance] => 
+    [franchise_model] => 
+    [franchise_fee] => 
+    [royalty_fee] => 
+    [brand_fee] => 
+    [master_franchise] => 
+    [area_development] => 
+    [target_audience] => 
+    [required_area] => 
+    [investment_range] => 
+    [expected_roi] => 
+    [expected_payback_period] => 
+    [master_franchise_scope] => 
+    [franchise_type_id] => 
+    [master_franchise_state_ids] => 
+    [master_franchise_city_ids] => 
+    [expansion_state_ids] => 
+    [expansion_city_ids] => 
+)
+
+---

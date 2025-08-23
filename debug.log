@@ -1,0 +1,11 @@
+Array
+(
+    [brand_name] => workonfire
+    [brand_email] => nikk@gmail.com
+    [brand_mobile] => 6666666666
+    [brand_password] => nikk@1782
+    [state_id] => 1
+    [city_id] => 1
+    [category_id] => 1
+    [user_type] => brand
+)
