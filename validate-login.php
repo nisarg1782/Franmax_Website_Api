@@ -18,26 +18,26 @@ include "db.php";
 $raw = file_get_contents("php://input");
 $data = json_decode($raw, true);
 
-// ✅ Debugging (optional)
-// file_put_contents("debug.log", $raw.PHP_EOL, FILE_APPEND);
-
 // ✅ Validate JSON & Fields
 if (json_last_error() !== JSON_ERROR_NONE) {
     echo json_encode(["success" => false, "message" => "Invalid JSON format"]);
     exit();
 }
 
-if (empty($data['email']) || empty($data['password'])) {
+// Update: Check for 'username' instead of 'email'
+if (empty($data['user_name']) || empty($data['password'])) {
     echo json_encode(["success" => false, "message" => "Invalid input"]);
     exit();
 }
 
-$email = trim($data['email']);
+// Update: Use 'username' from the payload
+$username = trim($data['user_name']);
 $password = trim($data['password']);
 
 // ✅ Check User in DB
-$stmt = $conn->prepare("SELECT id, name,email,password, user_type FROM registred_user WHERE email = ?");
-$stmt->bind_param("s", $email);
+// Update: Search by 'user_name' in the database
+$stmt = $conn->prepare("SELECT id, name, user_name, password, user_type,email FROM registred_user WHERE user_name = ?");
+$stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -53,14 +53,16 @@ if ($result->num_rows > 0) {
                 "id" => $user['id'],
                 "name" => $user['name'],
                 "user_type" => $user['user_type'],
-                "email"=>$user["email"]
+                // Update: Return the user's username
+                "username" => $user["user_name"],
+                "email" => $user["email"] // Email is not available in this context
             ]
         ]);
     } else {
-        echo json_encode(["success" => false, "message" => "Invalid email or password"]);
+        echo json_encode(["success" => false, "message" => "Invalid username or password"]);
     }
 } else {
-    echo json_encode(["success" => false, "message" => "Invalid email or password"]);
+    echo json_encode(["success" => false, "message" => "Invalid username or password"]);
 }
 
 $stmt->close();

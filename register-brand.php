@@ -28,7 +28,8 @@ if (
     isset($data['state_id']) &&
     isset($data['city_id']) &&
     isset($data['category_id']) &&
-    isset($data['user_type'])
+    isset($data['user_type']) &&
+    isset($data["user_name"])
 ) {
     $name = trim($data['brand_name']);
     $email = trim($data['brand_email']);
@@ -40,15 +41,16 @@ if (
     $status = "active"; // Default status
     $user_type = trim($data['user_type']);
     $mode = "online"; // Default mode
+    $user_name = trim($data["user_name"]);
 
     // ✅ Check for duplicate email or mobile in the correct table
-    $check = $conn->prepare("SELECT id FROM registred_user WHERE name=? AND user_type='brand'");
-    $check->bind_param("s",$name);
+    $check = $conn->prepare("SELECT id FROM registred_user WHERE user_name=?");
+    $check->bind_param("s", $user_name);
     $check->execute();
     $check->store_result();
 
     if ($check->num_rows > 0) {
-        echo json_encode(["success" => false, "message" => "brand already registered."]);
+        echo json_encode(["success" => false, "message" => "UserName already exists."]);
         $check->close();
         $conn->close();
         exit();
@@ -56,15 +58,15 @@ if (
     $check->close();
 
     // ✅ Insert into the correct table with all fields
-    $stmt = $conn->prepare("INSERT INTO registred_user (name, email, mobile, password, state_id, city_id, mas_cat_id, status, user_type, mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO registred_user (name,user_name,email, mobile, password, state_id, city_id, mas_cat_id, status, user_type, mode) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     if (!$stmt) {
         echo json_encode(["success" => false, "message" => "Prepare failed: " . $conn->error]);
         $conn->close();
         exit();
     }
-    
+
     // ✅ Fix: Changed bind_param types to match the variables
-    $stmt->bind_param("ssssiiisss", $name, $email, $mobile, $password, $state_id, $city_id, $category_id, $status, $user_type, $mode);
+    $stmt->bind_param("sssssiiisss", $name, $user_name, $email, $mobile, $password, $state_id, $city_id, $category_id, $status, $user_type, $mode);
 
     if ($stmt->execute()) {
         // Updated success message to be more generic
@@ -79,4 +81,3 @@ if (
 }
 
 $conn->close();
-?>

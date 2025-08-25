@@ -46,6 +46,7 @@ include "db.php";
 
 // Sanitize and prepare data for insertion
 $name       = trim($data['investor_name']);
+$user_name = trim($data['user_name']);
 $mobile     = trim($data['investor_mobile']);
 $email      = trim($data['investor_email']);
 $password   = password_hash($data['investor_password'], PASSWORD_BCRYPT);
@@ -57,15 +58,15 @@ $status     = "active";
 $mode       = "online";
 
 // --- Check if Email or Mobile already exists ---
-$check = $conn->prepare("SELECT id FROM registred_user WHERE email = ? OR mobile = ?");
-$check->bind_param("ss", $email, $mobile);
+$check = $conn->prepare("SELECT id FROM registred_user WHERE user_name = ?");
+$check->bind_param("s", $user_name);
 $check->execute();
 $check->store_result();
 
 if ($check->num_rows > 0) {
     echo json_encode([
         "success" => false,
-        "message" => "Email or Mobile already exists"
+        "message" => "User Name already exists"
     ]);
     $check->close();
     $conn->close();
@@ -75,8 +76,8 @@ if ($check->num_rows > 0) {
 $check->close();
 
 // --- Insert into DB ---
-$stmt = $conn->prepare("INSERT INTO registred_user (name, mobile, email, password, state_id, city_id, mas_cat_id, status, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssiiiss", $name, $mobile, $email, $password, $state_id, $city_id, $sector_id, $status, $user_type);
+$stmt = $conn->prepare("INSERT INTO registred_user (name, user_name, mobile, email, password, state_id, city_id, mas_cat_id, status, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("sssssiiiss", $name, $user_name, $mobile, $email, $password, $state_id, $city_id, $sector_id, $status, $user_type);
 
 if ($stmt->execute()) {
     // --- IMPORTANT: Send the successful registration response immediately ---
@@ -85,17 +86,16 @@ if ($stmt->execute()) {
         "success" => true,
         "message" => "Registered successfully"
     ]);
-    
-    // --- Email Sending Process (now happens after the response is sent) ---
+
     // The browser will receive the JSON response, but the PHP script will continue to run.
-    
+
     // This is the correct way to include the file containing the function.
     // The previous file name was slightly different.
     // require_once 'send-registration-mail.php';
-    
+
     // $filesToAttach = ['dm.pdf']; // Specify the file(s) to attach
     // sendRegistrationEmail($email, $name, $filesToAttach);
-    
+
 } else {
     // If the database insert fails, send an error message
     echo json_encode([
@@ -106,5 +106,4 @@ if ($stmt->execute()) {
 
 $stmt->close();
 $conn->close();
-
 ?>

@@ -299,7 +299,7 @@ if ($register_id !== null) {
     // otherwise it will update the state_id and city_id for that existing record.
     $plan_sql = "INSERT INTO brand_plan_map(register_id, plan_category_id) VALUES(?, ?)
                       ON DUPLICATE KEY UPDATE register_id = VALUES(register_id)";
-    $plan_category=2;
+    $plan_category=1;
 
     $plan_stmt = $conn->prepare($plan_sql);
     if ($plan_stmt === false) {

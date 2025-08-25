@@ -12,6 +12,7 @@ $brandsSql = "
     SELECT
       ru.id,
       ru.name,
+      bp.photo_url as logo,
       b.total_outlets,
       master_category.mas_cat_name AS sector
     FROM brands b
@@ -21,6 +22,8 @@ $brandsSql = "
       ON master_category.mas_cat_id = ru.mas_cat_id
     JOIN brand_plan_map bpm
       ON bpm.register_id = b.register_id
+    JOIN brand_photos bp
+      ON bp.brand_id = b.register_id AND bp.photo_type = 'logo'
     WHERE bpm.plan_category_id=1
 ";
 
@@ -34,6 +37,7 @@ $brands = [];
 while ($row = $brandsResult->fetch_assoc()) {
     $brand = [
         "id" => $row['id'],
+        "logo" => $row['logo'],
         "name" => $row['name'],
         "total_outlets" => $row['total_outlets'] ?? 0,
         "sector" => $row["sector"],
