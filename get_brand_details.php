@@ -20,6 +20,7 @@ $categoryId = intval($_GET['product_id']);
 $brandsSql = "
     SELECT
         ru.id AS register_id,
+        b.*,
         ru.name,
         b.total_outlets,
         master_category.mas_cat_name AS sector,

@@ -55,6 +55,8 @@ $franchise_fee=$data["franchise_fee"] ?? 0;
 $modal_id = $data["franchise_model"];
 $state_ids = $data["expansion_state_ids"];
 $city_ids = $data["expansion_city_ids"];
+$commenced_operations = $data["commenced_operations_year"] ?? null;
+$expansion_start=$data["expansion_started_year"] ?? null;
 if ($register_id !== null) {
     // The "ON DUPLICATE KEY UPDATE" clause here handles your request.
     // It will insert a new record if the register_id doesn't exist,
@@ -230,8 +232,8 @@ $sql = "INSERT INTO brands (
     bd_manager_email, bd_manager_contact, address, total_outlets, franchise_owned_outlets, 
     company_owned_outlets, marketing_materials_available, is_term_renewable, 
     has_operating_manuals, field_assistance_available, head_office_assistance, 
-    it_systems_included, franchise_years, modal_id,cat_id,sub_cat_id,franchise_fee
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?)
+    it_systems_included, franchise_years, modal_id,cat_id,sub_cat_id,franchise_fee,commenced_operations,expansion_start
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?)
 ON DUPLICATE KEY UPDATE
     description = VALUES(description),
     company_name = VALUES(company_name),
@@ -254,7 +256,9 @@ ON DUPLICATE KEY UPDATE
     modal_id = VALUES(modal_id),
     cat_id=VALUES(cat_id),
     sub_cat_id=VALUES(sub_cat_id)
-    ,franchise_fee=VALUES(franchise_fee)
+    ,franchise_fee=VALUES(franchise_fee),
+    commenced_operations=VALUES(commenced_operations),
+    expansion_start=VALUES(expansion_start)
     ";
 
 
@@ -270,7 +274,7 @@ if ($stmt === false) {
 // The type string 'issssssssssssssssssi' now correctly matches the columns:
 // i: register_id (int), s: all the strings/enums, i: total_outlets (int), s: franchise_years (enum), i: modal_id (int)
 $stmt->bind_param(
-    "issssssssssssssssssiiis",
+    "issssssssssssssssssiiisss",
     $register_id,
     $description,
     $company_name,
@@ -293,7 +297,9 @@ $stmt->bind_param(
     $modal_id,
     $cat_id,
     $subcat_id
-    ,$franchise_fee
+    ,$franchise_fee,
+    $commenced_operations,
+    $expansion_start
 );
 if ($register_id !== null) {
     // The "ON DUPLICATE KEY UPDATE" clause here handles your request.
