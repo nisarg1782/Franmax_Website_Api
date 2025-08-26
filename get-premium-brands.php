@@ -52,10 +52,109 @@ while ($row = $brandsResult->fetch_assoc()) {
 }
 
 // Iterate through the fetched brands to find their unit details and calculate min/max values
+// foreach ($brands as &$brand) {
+//     $registerId = $brand['id'];
+    
+//     // First, check the single_unit_details table
+//     $singleUnitSql = "SELECT * FROM single_unit_details WHERE register_id = ?";
+//     $singleUnitStmt = $conn->prepare($singleUnitSql);
+//     $singleUnitStmt->bind_param("i", $registerId);
+//     $singleUnitStmt->execute();
+//     $singleUnitResult = $singleUnitStmt->get_result();
+
+//     if ($singleUnitResult->num_rows > 0) {
+//         $details = $singleUnitResult->fetch_assoc();
+//         $brand['single_unit_details'] = $details;
+        
+//         // Parse investment range
+//         $investmentRange = explode('-', $details['investment']);
+//         if (count($investmentRange) === 2) {
+//             $min = (int)$investmentRange[0];
+//             $max = (int)$investmentRange[1];
+//             $brand['min_investment'] = $min;
+//             $brand['max_investment'] = $max;
+//         }
+        
+//         // Parse area range
+//         $areaRange = explode('-', $details['area_req']);
+//         if (count($areaRange) === 2) {
+//             $min = (int)$areaRange[0];
+//             $max = (int)$areaRange[1];
+//             $brand['min_area'] = $min;
+//             $brand['max_area'] = $max;
+//         }
+//     }
+    
+//     // Then, check the master_unit_details table
+//     $masterUnitSql = "SELECT * FROM master_unit_details WHERE register_id = ?";
+//     $masterUnitStmt = $conn->prepare($masterUnitSql);
+//     $masterUnitStmt->bind_param("i", $registerId);
+//     $masterUnitStmt->execute();
+//     $masterUnitResult = $masterUnitStmt->get_result();
+    
+//     if ($masterUnitResult->num_rows > 0) {
+//         $details = $masterUnitResult->fetch_assoc();
+//         $brand['master_unit_details'] = $details;
+        
+//         // Parse investment range
+//         $investmentRange = explode('-', $details['investment']);
+//         if (count($investmentRange) === 2) {
+//             $min = (int)$investmentRange[0];
+//             $max = (int)$investmentRange[1];
+
+//             // Only update if the master unit details have a wider range
+//             if ($brand['min_investment'] === null || $min < $brand['min_investment']) {
+//                 $brand['min_investment'] = $min;
+//             }
+//             if ($brand['max_investment'] === null || $max > $brand['max_investment']) {
+//                 $brand['max_investment'] = $max;
+//             }
+//         }
+        
+//         // Parse area range
+//         $areaRange = explode('-', $details['area_req']);
+//         if (count($areaRange) === 2) {
+//             $min = (int)$areaRange[0];
+//             $max = (int)$areaRange[1];
+            
+//             // Only update if the master unit details have a wider range
+//             if ($brand['min_area'] === null || $min < $brand['min_area']) {
+//                 $brand['min_area'] = $min;
+//             }
+//             if ($brand['max_area'] === null || $max > $brand['max_area']) {
+//                 $brand['max_area'] = $max;
+//             }
+//         }
+//     }
+// }
 foreach ($brands as &$brand) {
     $registerId = $brand['id'];
-    
-    // First, check the single_unit_details table
+
+    // Helper to parse a range like "5000000-10000000" or "10000000+"
+    $parseRange = function ($rangeString) {
+        $parts = explode('-', $rangeString);
+
+        // Clean a single value or each part of range
+        $clean = function ($val) {
+            return (int)preg_replace('/[^\d]/', '', $val); // keep only digits
+        };
+
+        if (count($parts) === 2) {
+            return [
+                'min' => $clean($parts[0]),
+                'max' => $clean($parts[1])
+            ];
+        } else {
+            // single value with + or no dash
+            $val = $clean($rangeString);
+            return [
+                'min' => $val,
+                'max' => $val // or null if you want open-ended
+            ];
+        }
+    };
+
+    // --- First, check single_unit_details ---
     $singleUnitSql = "SELECT * FROM single_unit_details WHERE register_id = ?";
     $singleUnitStmt = $conn->prepare($singleUnitSql);
     $singleUnitStmt->bind_param("i", $registerId);
@@ -65,68 +164,57 @@ foreach ($brands as &$brand) {
     if ($singleUnitResult->num_rows > 0) {
         $details = $singleUnitResult->fetch_assoc();
         $brand['single_unit_details'] = $details;
-        
-        // Parse investment range
-        $investmentRange = explode('-', $details['investment']);
-        if (count($investmentRange) === 2) {
-            $min = (int)$investmentRange[0];
-            $max = (int)$investmentRange[1];
-            $brand['min_investment'] = $min;
-            $brand['max_investment'] = $max;
+
+        // Investment range
+        if (!empty($details['investment'])) {
+            $inv = $parseRange($details['investment']);
+            $brand['min_investment'] = $inv['min'];
+            $brand['max_investment'] = $inv['max'];
         }
-        
-        // Parse area range
-        $areaRange = explode('-', $details['area_req']);
-        if (count($areaRange) === 2) {
-            $min = (int)$areaRange[0];
-            $max = (int)$areaRange[1];
-            $brand['min_area'] = $min;
-            $brand['max_area'] = $max;
+
+        // Area range
+        if (!empty($details['area_req'])) {
+            $area = $parseRange($details['area_req']);
+            $brand['min_area'] = $area['min'];
+            $brand['max_area'] = $area['max'];
         }
     }
-    
-    // Then, check the master_unit_details table
+
+    // --- Then, check master_unit_details ---
     $masterUnitSql = "SELECT * FROM master_unit_details WHERE register_id = ?";
     $masterUnitStmt = $conn->prepare($masterUnitSql);
     $masterUnitStmt->bind_param("i", $registerId);
     $masterUnitStmt->execute();
     $masterUnitResult = $masterUnitStmt->get_result();
-    
+
     if ($masterUnitResult->num_rows > 0) {
         $details = $masterUnitResult->fetch_assoc();
         $brand['master_unit_details'] = $details;
-        
-        // Parse investment range
-        $investmentRange = explode('-', $details['investment']);
-        if (count($investmentRange) === 2) {
-            $min = (int)$investmentRange[0];
-            $max = (int)$investmentRange[1];
 
-            // Only update if the master unit details have a wider range
-            if ($brand['min_investment'] === null || $min < $brand['min_investment']) {
-                $brand['min_investment'] = $min;
+        // Investment range
+        if (!empty($details['investment'])) {
+            $inv = $parseRange($details['investment']);
+            if (!isset($brand['min_investment']) || $inv['min'] < $brand['min_investment']) {
+                $brand['min_investment'] = $inv['min'];
             }
-            if ($brand['max_investment'] === null || $max > $brand['max_investment']) {
-                $brand['max_investment'] = $max;
+            if (!isset($brand['max_investment']) || $inv['max'] > $brand['max_investment']) {
+                $brand['max_investment'] = $inv['max'];
             }
         }
-        
-        // Parse area range
-        $areaRange = explode('-', $details['area_req']);
-        if (count($areaRange) === 2) {
-            $min = (int)$areaRange[0];
-            $max = (int)$areaRange[1];
-            
-            // Only update if the master unit details have a wider range
-            if ($brand['min_area'] === null || $min < $brand['min_area']) {
-                $brand['min_area'] = $min;
+
+        // Area range
+        if (!empty($details['area_req'])) {
+            $area = $parseRange($details['area_req']);
+            if (!isset($brand['min_area']) || $area['min'] < $brand['min_area']) {
+                $brand['min_area'] = $area['min'];
             }
-            if ($brand['max_area'] === null || $max > $brand['max_area']) {
-                $brand['max_area'] = $max;
+            if (!isset($brand['max_area']) || $area['max'] > $brand['max_area']) {
+                $brand['max_area'] = $area['max'];
             }
         }
     }
 }
+
 
 echo json_encode([
     "success" => true,

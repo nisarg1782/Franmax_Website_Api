@@ -1,12 +1,12 @@
 Array
 (
-    [brand_name] => The Choclate Room
-    [user_name] => choclateroom
-    [brand_email] => dhawal@thechocolateroomindia.com
-    [brand_mobile] => 8000711888
-    [brand_password] => choclateroom@1234
-    [state_id] => 12
-    [city_id] => 783
-    [category_id] => 6
+    [brand_name] => aayush
+    [user_name] => aayush
+    [brand_email] => aa@gmail.com
+    [brand_mobile] => 9876543211
+    [brand_password] => aayush@123
+    [state_id] => 3
+    [city_id] => 300
+    [category_id] => 2
     [user_type] => brand
 )

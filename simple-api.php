@@ -50,7 +50,7 @@ $it_systems_included = $data['it_systems_included'] ?? 'No';
 $franchise_years = $data["franchise_years"] ?? '-- Select --';
 $cat_id = (int)($data['cat_id']);
 $subcat_id = (int)($data['sub_cat_id']);
-
+$franchise_fee=$data["franchise_fee"] ?? 0;
 // The 'modal_id' is not provided in your JSON, so we set it to NULL.
 $modal_id = $data["franchise_model"];
 $state_ids = $data["expansion_state_ids"];
@@ -230,8 +230,8 @@ $sql = "INSERT INTO brands (
     bd_manager_email, bd_manager_contact, address, total_outlets, franchise_owned_outlets, 
     company_owned_outlets, marketing_materials_available, is_term_renewable, 
     has_operating_manuals, field_assistance_available, head_office_assistance, 
-    it_systems_included, franchise_years, modal_id,cat_id,sub_cat_id
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
+    it_systems_included, franchise_years, modal_id,cat_id,sub_cat_id,franchise_fee
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?)
 ON DUPLICATE KEY UPDATE
     description = VALUES(description),
     company_name = VALUES(company_name),
@@ -254,6 +254,7 @@ ON DUPLICATE KEY UPDATE
     modal_id = VALUES(modal_id),
     cat_id=VALUES(cat_id),
     sub_cat_id=VALUES(sub_cat_id)
+    ,franchise_fee=VALUES(franchise_fee)
     ";
 
 
@@ -269,7 +270,7 @@ if ($stmt === false) {
 // The type string 'issssssssssssssssssi' now correctly matches the columns:
 // i: register_id (int), s: all the strings/enums, i: total_outlets (int), s: franchise_years (enum), i: modal_id (int)
 $stmt->bind_param(
-    "issssssssssssssssssiii",
+    "issssssssssssssssssiiis",
     $register_id,
     $description,
     $company_name,
@@ -292,6 +293,7 @@ $stmt->bind_param(
     $modal_id,
     $cat_id,
     $subcat_id
+    ,$franchise_fee
 );
 if ($register_id !== null) {
     // The "ON DUPLICATE KEY UPDATE" clause here handles your request.
