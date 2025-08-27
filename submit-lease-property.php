@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $targetPath = $uploadDir . $fileName;
 
         if (move_uploaded_file($_FILES['image']['tmp_name'], $targetPath)) {
-            $imagePath = $targetPath;
+            $imagePath = $fileName;
         }
     }
 
@@ -61,7 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Error saving data.']);
     }
-
     $stmt->close();
 } else {
     echo json_encode(['status' => 'invalid', 'message' => 'Invalid request method.']);
