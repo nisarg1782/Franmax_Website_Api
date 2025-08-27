@@ -10,12 +10,7 @@ $mas_cat = isset($_GET['mas_cat']) ? (int)$_GET['mas_cat'] : 0;
 $cat = isset($_GET['cat']) ? (int)$_GET['cat'] : 0;
 $sub = isset($_GET['sub']) ? (int)$_GET['sub'] : 0;
 
-$conn = new mysqli("localhost", "root", "", "testproject");
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["success" => false, "message" => "Database connection failed."]);
-    exit();
-}
+include "db.php";
 // Base query
 $brandsSql = "
     SELECT
