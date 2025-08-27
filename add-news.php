@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 // ===================== UPLOAD PATH CONFIGURATION =====================
 // Define the path to your uploads folder. This path is relative to the PHP script.
 // Ensure this folder has write permissions (e.g., 0777)
-$uploadDir = "C:\\Users\\Nisarg\\Desktop\\React_Project\\myapp\\src\\assets\\uploads\\";
+$uploadDir = "uploads/"; // Ensure this folder exists and is writable
 
 // Create the directory if it doesn't exist
 if (!is_dir($uploadDir)) {
