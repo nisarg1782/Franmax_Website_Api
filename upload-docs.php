@@ -9,7 +9,7 @@ header("Content-Type: application/json");
 
 // Define file upload settings
 $uploadDirName = 'uploads/';
-$base_url = 'http://localhost/react-api/' . $uploadDirName;
+$base_url = $uploadDirName;
 $uploadDir = __DIR__ . '/' . $uploadDirName;
 
 $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];

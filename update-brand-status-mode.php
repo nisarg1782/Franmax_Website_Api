@@ -23,7 +23,7 @@ $status = $conn->real_escape_string(trim($data['status']));
 $mode = $conn->real_escape_string(trim($data['mode']));
 
 // Run Update
-$sql = "UPDATE brand_registration SET status = '$status', mode = '$mode' WHERE id = $id";
+$sql = "UPDATE registred_user SET status = '$status', mode = '$mode' WHERE id = $id";
 if ($conn->query($sql)) {
     echo json_encode(["success" => true, "message" => "Brand updated successfully"]);
 } else {

@@ -6,7 +6,7 @@ header("Content-Type: application/json");
 
 // Define database connection details
 
-$base_url = 'http://localhost/react-api/uploads/';
+// $base_url = 'http://localhost/react-api/uploads/';
 
 // Database connection
 include "db.php";
@@ -40,9 +40,8 @@ $images = [
 while ($row = $result->fetch_assoc()) {
     // Dynamically map the photo_url to the correct key using photo_type
     // Add the full URL for the frontend
-    $images[$row['photo_type']] = $base_url . $row['photo_url'];
+    $images[$row['photo_type']] = $row['photo_url'];
 }
-
 $stmt->close();
 $conn->close();
 

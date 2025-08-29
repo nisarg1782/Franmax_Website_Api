@@ -13,24 +13,25 @@ header("Content-Type: application/json; charset=UTF-8");
 // DB connection
 include "db.php";
 
-// Fetch brands with joins (assuming lookup tables exist)
+// Fetch brands with joins
 $sql = "
     SELECT 
-        br.id,
-        br.name,
-        br.mobile,
-        br.email,
-        br.mode,
-        br.status,
-        br.created_at,
+        ru.*,
+        mc.mas_cat_name AS sector_name,
         s.name AS state_name,
-        c.name AS city_name,
-        mas.mas_cat_name AS sector_name
-    FROM brand_registration br
-    LEFT JOIN states s ON br.state_id = s.id
-    LEFT JOIN cities c ON br.city_id = c.id
-    LEFT JOIN master_category mas ON br.sector_id = mas.mas_cat_id
-    ORDER BY br.created_at DESC
+        c.name AS city_name
+    FROM 
+        registred_user AS ru
+    LEFT JOIN 
+        master_category AS mc ON ru.mas_cat_id = mc.mas_cat_id
+    LEFT JOIN 
+        states AS s ON ru.state_id = s.id
+    LEFT JOIN 
+        cities AS c ON ru.city_id = c.id
+    WHERE 
+        ru.user_type = 'brand'
+    ORDER BY 
+        ru.id DESC
 ";
 
 $result = $conn->query($sql);

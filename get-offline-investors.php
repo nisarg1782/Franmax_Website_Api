@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 // Prepare and execute the query to fetch all investors
-$stmt = $conn->prepare("SELECT * FROM investor_registration ORDER BY id DESC");
+$stmt = $conn->prepare("SELECT * FROM registred_user WHERE user_type='investor' ORDER BY id DESC");
 
 if (!$stmt) {
     http_response_code(500);

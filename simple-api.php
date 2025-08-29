@@ -1,19 +1,19 @@
 <?php
 
-// Simple sanitize function to escape special characters for SQL
-function sanitize($conn, $value)
-{
-    return $conn->real_escape_string($value);
-}
-
 // --- 1. API Headers ---
 // This allows cross-origin requests and specifies the response format as JSON.
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Content-Type: application/json");
 
 // --- 2. Database Connection Details ---
-// Make sure to use your correct database credentials here.
+// The 'db.php' file should contain your database connection logic.
+// For example:
+// $conn = new mysqli("localhost", "your_username", "your_password", "your_database");
+// if ($conn->connect_error) {
+//     die("Connection failed: " . $conn->connect_error);
+// }
 include "db.php";
 
 // --- 3. Get and Decode the Incoming JSON Data ---
@@ -38,7 +38,7 @@ $bd_manager_name = $data['bd_manager_name'] ?? null;
 $bd_manager_email = $data['bd_manager_email'] ?? null;
 $bd_manager_contact = $data['bd_manager_contact'] ?? null;
 $address = $data['address'] ?? null;
-$total_outlets = $data['total_outlets'] ?? 0;
+$total_outlets = $data['total_outlets'] ?? '0-10'; // Using a default from ENUM
 $franchise_owned_outlets = $data['franchise_owned_outlets'] ?? '-- Select --';
 $company_owned_outlets = $data['company_owned_outlets'] ?? '-- Select --';
 $marketing_materials_available = $data['marketing_materials_provided'] ?? 'No';
@@ -49,45 +49,39 @@ $head_office_assistance = $data['head_office_assistance'] ?? 'No';
 $it_systems_included = $data['it_systems_included'] ?? 'No';
 $franchise_years = $data["franchise_years"] ?? '-- Select --';
 $cat_id = (int)($data['cat_id']);
-$subcat_id = (int)($data['sub_cat_id']);
-$franchise_fee=$data["franchise_fee"] ?? 0;
-// The 'modal_id' is not provided in your JSON, so we set it to NULL.
-$modal_id = $data["franchise_model"];
-$state_ids = $data["expansion_state_ids"];
-$city_ids = $data["expansion_city_ids"];
+$sub_cat_id = (int)($data['sub_cat_id']);
+$franchise_fee = $data["franchise_fee"] ?? 0;
+$modal_id = $data["franchise_model"] ?? null;
 $commenced_operations = $data["commenced_operations_year"] ?? null;
-$expansion_start=$data["expansion_started_year"] ?? null;
+$expansion_start = $data["expansion_started_year"] ?? null;
+
+// --- 5. Insert/Update Data in Related Tables ---
+
+// brand_expansion table
 if ($register_id !== null) {
-    // The "ON DUPLICATE KEY UPDATE" clause here handles your request.
-    // It will insert a new record if the register_id doesn't exist,
-    // otherwise it will update the state_id and city_id for that existing record.
-    $expansion_sql = "INSERT INTO brand_expansion(register_id, state_id, city_id) VALUES(?, ?, ?)
-                      ON DUPLICATE KEY UPDATE state_id = VALUES(state_id), city_id = VALUES(city_id)";
+    $state_ids = $data["expansion_state_ids"] ?? null;
+    $city_ids = $data["expansion_city_ids"] ?? null;
+    $expansion_sql = "INSERT INTO brand_expansion(register_id, state_id, city_id) 
+                      VALUES(?, ?, ?)
+                      ON DUPLICATE KEY UPDATE 
+                      state_id = VALUES(state_id), city_id = VALUES(city_id)";
 
     $expansion_stmt = $conn->prepare($expansion_sql);
     if ($expansion_stmt === false) {
         echo json_encode(['status' => 'error', 'message' => 'Error preparing statement for brand expansion: ' . $conn->error]);
         exit();
     }
-
-    // Bind parameters for the prepared statement
     $expansion_stmt->bind_param("iss", $register_id, $state_ids, $city_ids);
-
-    // Execute the statement
-    $expansion_stmt->execute();
+    if (!$expansion_stmt->execute()) {
+        echo json_encode(['status' => 'error', 'message' => 'Error executing statement for brand expansion: ' . $expansion_stmt->error]);
+        exit();
+    }
     $expansion_stmt->close();
 }
 
+// single_unit_details table
 if (!empty($data["single_required_area"]) && !empty($data["single_investment_range"]) && !empty($data["single_expected_payback_period"]) && !empty($data["single_expected_roi"])) {
-    $single_area = $data["single_required_area"];
-    $single_investment = $data["single_investment_range"];
-    $single_payback = $data["single_expected_payback_period"];
-    $single_roi = $data["single_expected_roi"];
-
-    // The query has been updated to use ON DUPLICATE KEY UPDATE.
-    // If a row with a matching `register_id` already exists,
-    // it will update the other columns with the new values.
-    $single_unit_sql = "INSERT INTO single_unit_details(register_id,area_req,investment,payback,roi) 
+    $single_unit_sql = "INSERT INTO single_unit_details(register_id, area_req, investment, payback, roi) 
                         VALUES(?,?,?,?,?) 
                         ON DUPLICATE KEY UPDATE 
                         area_req = VALUES(area_req), 
@@ -96,137 +90,142 @@ if (!empty($data["single_required_area"]) && !empty($data["single_investment_ran
                         roi = VALUES(roi)";
 
     $single_unit_stmt = $conn->prepare($single_unit_sql);
-    $single_unit_stmt->bind_param("issss", $register_id, $single_area, $single_investment, $single_payback, $single_roi);
-    $single_unit_stmt->execute();
+    $single_unit_stmt->bind_param(
+        "issss",
+        $register_id,
+        $data["single_required_area"],
+        $data["single_investment_range"],
+        $data["single_expected_payback_period"],
+        $data["single_expected_roi"]
+    );
+    if (!$single_unit_stmt->execute()) {
+        echo json_encode(['status' => 'error', 'message' => 'Error executing statement for single unit details: ' . $single_unit_stmt->error]);
+        exit();
+    }
+    $single_unit_stmt->close();
 }
 
-// Check if master unit country details are present and insert if so
-// Check if master unit country details are present and insert if so
-if (
-    !empty($data["master_required_area_country"]) &&
-    !empty($data["master_investment_range_country"]) &&
-    !empty($data["master_expected_payback_period_country"]) &&
-    isset($data["master_expected_roi_country"])
-) {
-    // The SQL query is updated with the ON DUPLICATE KEY UPDATE clause.
-    // If a record with a matching `register_id` is found,
-    // the other columns will be updated with the new values.
-    $sql = "INSERT INTO `master_unit_details` (`register_id`, `area_req`, `investment`, `roi`, `payback`, `type`) 
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-            area_req = VALUES(area_req),
-            investment = VALUES(investment),
-            roi = VALUES(roi),
-            payback = VALUES(payback),
-            type = VALUES(type)";
+// master_unit_details table (country-wise)
+if (!empty($data["master_required_area_country"]) && !empty($data["master_investment_range_country"]) && !empty($data["master_expected_payback_period_country"]) && isset($data["master_expected_roi_country"])) {
+    $master_sql = "INSERT INTO `master_unit_details` (`register_id`, `area_req`, `investment`, `roi`, `payback`, `type`) 
+                   VALUES (?, ?, ?, ?, ?, ?)
+                   ON DUPLICATE KEY UPDATE
+                   area_req = VALUES(area_req),
+                   investment = VALUES(investment),
+                   roi = VALUES(roi),
+                   payback = VALUES(payback),
+                   type = VALUES(type)";
 
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        throw new Exception("Prepare statement failed for master_unit_details: " . $conn->error);
+    $master_stmt = $conn->prepare($master_sql);
+    if (!$master_stmt) {
+        echo json_encode(['status' => 'error', 'message' => 'Prepare statement failed for master unit details (country): ' . $conn->error]);
+        exit();
     }
-
-    $master_area = $data["master_required_area_country"];
-    $master_investment = $data["master_investment_range_country"];
-    $master_roi = $data["master_expected_roi_country"] ?? 0;
-    $master_payback = $data["master_expected_payback_period_country"];
     $master_type = 'country_wise';
-
-    // The rest of the code remains the same.
-    $stmt->bind_param("isssis", $register_id, $master_area, $master_investment, $master_roi, $master_payback, $master_type);
-
-    if (!$stmt->execute()) {
-        throw new Exception("Error inserting/updating master_unit_details: " . $conn->error);
+    $master_stmt->bind_param(
+        "isssis",
+        $register_id,
+        $data["master_required_area_country"],
+        $data["master_investment_range_country"],
+        $data["master_expected_roi_country"],
+        $data["master_expected_payback_period_country"],
+        $master_type
+    );
+    if (!$master_stmt->execute()) {
+        echo json_encode(['status' => 'error', 'message' => 'Error executing statement for master unit details (country): ' . $master_stmt->error]);
+        exit();
     }
-    $stmt->close();
+    $master_stmt->close();
 }
 
+// master_unit_details table (state-wise)
+if (!empty($data["master_required_area_state"]) && !empty($data["master_investment_range_state"]) && !empty($data["master_expected_payback_period_state"]) && isset($data["master_expected_roi_state"])) {
+    $master_sql = "INSERT INTO `master_unit_details` (`register_id`, `area_req`, `investment`, `roi`, `payback`, `type`) 
+                   VALUES (?, ?, ?, ?, ?, ?)
+                   ON DUPLICATE KEY UPDATE
+                   area_req = VALUES(area_req),
+                   investment = VALUES(investment),
+                   roi = VALUES(roi),
+                   payback = VALUES(payback),
+                   type = VALUES(type)";
 
-// Check if master unit state details are present and insert if so
-if (
-    !empty($data["master_required_area_state"]) &&
-    !empty($data["master_investment_range_state"]) &&
-    !empty($data["master_expected_payback_period_state"]) &&
-    isset($data["master_expected_roi_state"])
-) {
-    // The SQL query is updated with the ON DUPLICATE KEY UPDATE clause.
-    // If a record with a matching `register_id` is found,
-    // the other columns will be updated with the new values.
-    $sql = "INSERT INTO `master_unit_details` (`register_id`, `area_req`, `investment`, `roi`, `payback`, `type`) 
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-            area_req = VALUES(area_req),
-            investment = VALUES(investment),
-            roi = VALUES(roi),
-            payback = VALUES(payback),
-            type = VALUES(type)";
-
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        throw new Exception("Prepare statement failed for master_unit_details: " . $conn->error);
+    $master_stmt = $conn->prepare($master_sql);
+    if (!$master_stmt) {
+        echo json_encode(['status' => 'error', 'message' => 'Prepare statement failed for master unit details (state): ' . $conn->error]);
+        exit();
     }
-
-    $master_area = $data["master_required_area_state"];
-    $master_investment = $data["master_investment_range_state"];
-    $master_roi = $data["master_expected_roi_state"] ?? 0;
-    $master_payback = $data["master_expected_payback_period_state"];
     $master_type = 'state_wise';
-
-    // The rest of the code remains the same.
-    $stmt->bind_param("isssis", $register_id, $master_area, $master_investment, $master_roi, $master_payback, $master_type);
-
-    if (!$stmt->execute()) {
-        throw new Exception("Error inserting/updating master_unit_details: " . $conn->error);
+    $master_stmt->bind_param(
+        "isssis",
+        $register_id,
+        $data["master_required_area_state"],
+        $data["master_investment_range_state"],
+        $data["master_expected_roi_state"],
+        $data["master_expected_payback_period_state"],
+        $master_type
+    );
+    if (!$master_stmt->execute()) {
+        echo json_encode(['status' => 'error', 'message' => 'Error executing statement for master unit details (state): ' . $master_stmt->error]);
+        exit();
     }
-    $stmt->close();
+    $master_stmt->close();
 }
 
+// master_unit_details table (city-wise)
+if (!empty($data["master_required_area_city"]) && !empty($data["master_investment_range_city"]) && !empty($data["master_expected_payback_period_city"]) && isset($data["master_expected_roi_city"])) {
+    $master_sql = "INSERT INTO `master_unit_details` (`register_id`, `area_req`, `investment`, `roi`, `payback`, `type`) 
+                   VALUES (?, ?, ?, ?, ?, ?)
+                   ON DUPLICATE KEY UPDATE
+                   area_req = VALUES(area_req),
+                   investment = VALUES(investment),
+                   roi = VALUES(roi),
+                   payback = VALUES(payback),
+                   type = VALUES(type)";
 
-// Check if master unit city details are present and insert if so
-if (
-    !empty($data["master_required_area_city"]) &&
-    !empty($data["master_investment_range_city"]) &&
-    !empty($data["master_expected_payback_period_city"]) &&
-    isset($data["master_expected_roi_city"])
-) {
-    // The SQL query is updated with the ON DUPLICATE KEY UPDATE clause.
-    // If a record with a matching `register_id` is found,
-    // the other columns will be updated with the new values.
-    $sql = "INSERT INTO `master_unit_details` (`register_id`, `area_req`, `investment`, `roi`, `payback`, `type`) 
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-            area_req = VALUES(area_req),
-            investment = VALUES(investment),
-            roi = VALUES(roi),
-            payback = VALUES(payback),
-            type = VALUES(type)";
-
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        throw new Exception("Prepare statement failed for master_unit_details: " . $conn->error);
+    $master_stmt = $conn->prepare($master_sql);
+    if (!$master_stmt) {
+        echo json_encode(['status' => 'error', 'message' => 'Prepare statement failed for master unit details (city): ' . $conn->error]);
+        exit();
     }
-
-    $master_area = $data["master_required_area_city"];
-    $master_investment = $data["master_investment_range_city"];
-    $master_roi = $data["master_expected_roi_city"] ?? 0;
-    $master_payback = $data["master_expected_payback_period_city"];
     $master_type = 'city_wise';
-
-    // The rest of the code remains the same.
-    $stmt->bind_param("isssis", $register_id, $master_area, $master_investment, $master_roi, $master_payback, $master_type);
-
-    if (!$stmt->execute()) {
-        throw new Exception("Error inserting/updating master_unit_details: " . $conn->error);
+    $master_stmt->bind_param(
+        "isssis",
+        $register_id,
+        $data["master_required_area_city"],
+        $data["master_investment_range_city"],
+        $data["master_expected_roi_city"],
+        $data["master_expected_payback_period_city"],
+        $master_type
+    );
+    if (!$master_stmt->execute()) {
+        echo json_encode(['status' => 'error', 'message' => 'Error executing statement for master unit details (city): ' . $master_stmt->error]);
+        exit();
     }
-    $stmt->close();
+    $master_stmt->close();
 }
 
+// brand_plan_map table
+if ($register_id !== null) {
+    $plan_sql = "INSERT INTO brand_plan_map(register_id, plan_category_id) 
+                 VALUES(?, ?)
+                 ON DUPLICATE KEY UPDATE 
+                 register_id = VALUES(register_id)";
+    $plan_category = 1;
 
+    $plan_stmt = $conn->prepare($plan_sql);
+    if ($plan_stmt === false) {
+        echo json_encode(['status' => 'error', 'message' => 'Error preparing statement for brand plan: ' . $conn->error]);
+        exit();
+    }
+    $plan_stmt->bind_param("ii", $register_id, $plan_category);
+    if (!$plan_stmt->execute()) {
+        echo json_encode(['status' => 'error', 'message' => 'Error executing statement for brand plan: ' . $plan_stmt->error]);
+        exit();
+    }
+    $plan_stmt->close();
+}
 
-// --- 5. Prepare and Bind the SQL Statement ---
-// The columns in this statement now match your table structure exactly.
-// The SQL query is updated with the ON DUPLICATE KEY UPDATE clause.
-// If a record with a matching `register_id` is found,
-// the other columns will be updated with the new values.
+// --- 6. Main Brands Table Insert/Update ---
 $sql = "INSERT INTO brands (
     register_id, description, company_name, brand_email, phone, bd_manager_name, 
     bd_manager_email, bd_manager_contact, address, total_outlets, franchise_owned_outlets, 
@@ -255,24 +254,19 @@ ON DUPLICATE KEY UPDATE
     franchise_years = VALUES(franchise_years),
     modal_id = VALUES(modal_id),
     cat_id=VALUES(cat_id),
-    sub_cat_id=VALUES(sub_cat_id)
-    ,franchise_fee=VALUES(franchise_fee),
+    sub_cat_id=VALUES(sub_cat_id),
+    franchise_fee=VALUES(franchise_fee),
     commenced_operations=VALUES(commenced_operations),
-    expansion_start=VALUES(expansion_start)
-    ";
+    expansion_start=VALUES(expansion_start)";
 
 
 $stmt = $conn->prepare($sql);
-
 if ($stmt === false) {
-    echo json_encode(['status' => 'error', 'message' => 'Error preparing statement: ' . $conn->error]);
+    echo json_encode(['status' => 'error', 'message' => 'Error preparing main brands statement: ' . $conn->error]);
     exit();
 }
 
-
-// Bind parameters for the prepared statement
-// The type string 'issssssssssssssssssi' now correctly matches the columns:
-// i: register_id (int), s: all the strings/enums, i: total_outlets (int), s: franchise_years (enum), i: modal_id (int)
+// Corrected bind_param call
 $stmt->bind_param(
     "issssssssssssssssssiiisss",
     $register_id,
@@ -296,18 +290,31 @@ $stmt->bind_param(
     $franchise_years,
     $modal_id,
     $cat_id,
-    $subcat_id
-    ,$franchise_fee,
+    $sub_cat_id, // Correct variable name
+    $franchise_fee,
     $commenced_operations,
     $expansion_start
 );
+
+// --- 7. Execute and Respond ---
+if ($stmt->execute()) {
+    echo json_encode(['status' => 'success', 'message' => 'Brands data inserted/updated successfully']);
+} else {
+    echo json_encode(['status' => 'error', 'message' => 'Error executing main brands statement: ' . $stmt->error]);
+}
+
+// --- 8. Close the Connections ---
+$stmt->close();
+$conn->close();
+
+
 if ($register_id !== null) {
     // The "ON DUPLICATE KEY UPDATE" clause here handles your request.
     // It will insert a new record if the register_id doesn't exist,
     // otherwise it will update the state_id and city_id for that existing record.
     $plan_sql = "INSERT INTO brand_plan_map(register_id, plan_category_id) VALUES(?, ?)
                       ON DUPLICATE KEY UPDATE register_id = VALUES(register_id)";
-    $plan_category=1;
+    $plan_category = 1;
 
     $plan_stmt = $conn->prepare($plan_sql);
     if ($plan_stmt === false) {
@@ -316,7 +323,7 @@ if ($register_id !== null) {
     }
 
     // Bind parameters for the prepared statement
-    $plan_stmt->bind_param("ii", $register_id,$plan_category);
+    $plan_stmt->bind_param("ii", $register_id, $plan_category);
 
     // Execute the statement
     $plan_stmt->execute();

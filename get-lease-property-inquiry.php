@@ -2,6 +2,7 @@
 
 // Set the Content-Type header to application/json
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
 
 // Database credentials - REPLACE with your actual credentials
 include "db.php";

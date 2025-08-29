@@ -36,7 +36,7 @@ $password = trim($data['password']);
 
 // ✅ Check User in DB
 // Update: Search by 'user_name' in the database
-$stmt = $conn->prepare("SELECT id, name, user_name, password, user_type,email FROM registred_user WHERE user_name = ?");
+$stmt = $conn->prepare("SELECT id, name, user_name, password, user_type,email FROM registred_user WHERE user_name = ? AND status = 'active'");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -62,7 +62,7 @@ if ($result->num_rows > 0) {
         echo json_encode(["success" => false, "message" => "Invalid username or password"]);
     }
 } else {
-    echo json_encode(["success" => false, "message" => "Invalid username or password"]);
+    echo json_encode(["success" => false, "message" => "Invalid username or password if your credentials are correct please contact admin to activate your account."]);
 }
 
 $stmt->close();

@@ -23,7 +23,7 @@ if (!$data) {
 }
 
 // 3. Extract and validate fields
-$required = ['name', 'mobile', 'email', 'password', 'state_id', 'city_id', 'mas_cat_id'];
+$required = ['name', 'mobile', 'email', 'password', 'state_id', 'city_id', 'mas_cat_id', 'user_name'];
 foreach ($required as $field) {
     if (!isset($data[$field]) || $data[$field] === '') {
         http_response_code(400); // Bad Request
@@ -36,20 +36,36 @@ foreach ($required as $field) {
 include "db.php"; // Ensure this file sets up $conn as the MySQLi connection
 
 // 5. Sanitize and prepare data
-$name = $data['name'];
-$mobile = $data['mobile'];
-$email = $data['email'];
+$name = trim($data['name']);
+$username = trim($data['user_name']);
+$mobile = trim($data['mobile']);
+$email = trim($data['email']);
 $hashed_password = password_hash($data['password'], PASSWORD_BCRYPT);
 $state_id = (int)$data['state_id'];
 $city_id = (int)$data['city_id'];
-$sector_id = (int)$data['mas_cat_id']; // Map mas_cat_id to sector_id
-$created_at = date('Y-m-d H:i:s');
+$sector_id = (int)$data['mas_cat_id'];
 $mode = 'offline';
 $status = 'active';
+$user_type = "brand";
 
-// 6. Insert into table using a prepared statement
-// This prevents SQL injection
-$sql = "INSERT INTO brand_registration (name, mobile, email, password, state_id, city_id, sector_id, created_at, mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+// 6. Check for duplicate user_name or email
+$check_sql = "SELECT id FROM registred_user WHERE user_name = ? OR email = ?";
+$check_stmt = $conn->prepare($check_sql);
+$check_stmt->bind_param("ss", $username, $email);
+$check_stmt->execute();
+$check_stmt->store_result();
+
+if ($check_stmt->num_rows > 0) {
+    http_response_code(409); // Conflict
+    echo json_encode(["success" => false, "message" => "Username or Email already exists."]);
+    $check_stmt->close();
+    $conn->close();
+    exit;
+}
+$check_stmt->close();
+
+// 7. Insert into table using a prepared statement
+$sql = "INSERT INTO registred_user (name, mobile, email, password, state_id, city_id, mas_cat_id, mode, status, user_name, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
@@ -59,9 +75,9 @@ if (!$stmt) {
     exit;
 }
 
-// 'ssssiiisss' defines the types of the parameters:
+// 'ssssiisss' defines the types of the 11 parameters:
 // s = string, i = integer
-$stmt->bind_param("ssssiiisss", $name, $mobile, $email, $hashed_password, $state_id, $city_id, $sector_id, $created_at, $mode, $status);
+$stmt->bind_param("ssssiiissss", $name, $mobile, $email, $hashed_password, $state_id, $city_id, $sector_id, $mode, $status, $username, $user_type);
 
 if ($stmt->execute()) {
     http_response_code(201); // Created

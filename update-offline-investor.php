@@ -47,10 +47,11 @@ $investorEmail = $conn->real_escape_string($data['email']);
 $stateId = (int)$data['state_id'];
 $cityId = (int)$data['city_id'];
 $status = $conn->real_escape_string($data['status']);
+$username= $conn->real_escape_string($data['user_name']);
 
 // --- Add unique check for email and mobile number ---
 // Check for existing email or mobile number on other records
-$checkSql = "SELECT id FROM investor_registration WHERE (email = ? OR mobile = ?) AND id != ?";
+$checkSql = "SELECT id FROM registred_user WHERE (user_name = ?) AND id != ?";
 $checkStmt = $conn->prepare($checkSql);
 
 if (!$checkStmt) {
@@ -59,13 +60,13 @@ if (!$checkStmt) {
     exit();
 }
 
-$checkStmt->bind_param("ssi", $investorEmail, $investorMobile, $investorId);
+$checkStmt->bind_param("si", $username, $investorId);
 $checkStmt->execute();
 $checkStmt->store_result();
 
 if ($checkStmt->num_rows > 0) {
     http_response_code(409); // Conflict
-    echo json_encode(["success" => false, "message" => "Email or mobile number is already in use by another investor."]);
+    echo json_encode(["success" => false, "message" => "User Name is already in use by another investor."]);
     $checkStmt->close();
     $conn->close();
     exit();
@@ -75,13 +76,14 @@ $checkStmt->close();
 
 
 // Prepare the UPDATE statement using a prepared statement to prevent SQL injection
-$sql = "UPDATE investor_registration SET 
+$sql = "UPDATE registred_user SET 
     name = ?, 
     mobile = ?, 
     email = ?, 
     state_id = ?, 
     city_id = ?, 
-    status = ?
+    status = ?,
+    user_name= ?
     WHERE id = ?";
 
 $stmt = $conn->prepare($sql);
@@ -92,7 +94,7 @@ if (!$stmt) {
     exit();
 }
 
-$stmt->bind_param("sssiisi", $investorName, $investorMobile, $investorEmail, $stateId, $cityId, $status, $investorId);
+$stmt->bind_param("sssiissi", $investorName, $investorMobile, $investorEmail, $stateId, $cityId, $status, $username,$investorId);
 
 if ($stmt->execute()) {
     if ($stmt->affected_rows > 0) {
