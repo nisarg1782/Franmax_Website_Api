@@ -87,7 +87,7 @@ if ($stmt === false) {
 $stmt->bind_param("sssiiss", $name, $contact, $email, $state_id, $city_id, $service_type, $inquiry_date);
 
 if ($stmt->execute()) {
-    http_response_code(201); // Created
+    http_response_code(200); // Created
     echo json_encode(["status" => "success", "message" => "Form submitted successfully."]);
 } else {
     http_response_code(500); // Internal Server Error

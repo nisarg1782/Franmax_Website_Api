@@ -19,24 +19,24 @@ use PHPMailer\PHPMailer\Exception;
 require 'vendor/autoload.php';
 
 // Function to send the registration ticket email using PHPMailer
-function sendRegistrationEmail($toEmail, $toName, $register_user_id, $registrationId)
+function sendRegistrationEmail($toEmail, $toName, $register_user_id, $registrationId,$payment_id)
 {
     $mail = new PHPMailer(true);
 
     try {
         // Server settings
         $mail->isSMTP();
-        $mail->Host       = 'smtp.franmaxindia.com';
+        $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
         // Use your Gmail address as the username
-        $mail->Username   = 'events@franmaxindia.com';
+        $mail->Username   = 'franmaxindia@gmail.com';
         // IMPORTANT: Use an App Password here, NOT your regular Gmail password.
-        $mail->Password   = 'Franmax@#0789';
+        $mail->Password   = 'fpwrraeodhdciqik';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         // Recipients
-        $mail->setFrom('events@franmaxindia.com', 'Franmax India');
+        $mail->setFrom('franmaxindia@gmail.com', 'Franmax India');
         $mail->addAddress($toEmail, $toName);
 
         // Content
@@ -77,6 +77,7 @@ function sendRegistrationEmail($toEmail, $toName, $register_user_id, $registrati
                           <a href='https://www.google.com/maps/dir//Taj+Skyline+Ahmedabad,+Sankalp+Square+III,+Opp.+Saket+3,+Sindhubhavan+Road,+nr.+Neelkanth+Green,+Shilaj,+Gujarat+380059/@23.0441336,72.3998757,12z/data=!4m8!4m7!1m0!1m5!1m1!1s0x395e9b6318e8da91:0x864bb42461cc953f!2m2!1d72.4822773!2d23.0441549?entry=ttu&g_ep=EgoyMDI1MDgxNy4wIKXMDSoASAFQAw%3D%3D'>Click Here For Venue Location</a>
                           <br>
                         <div class='detail-row'><span>Registration ID:</span> $register_user_id$registrationId</div>
+`                        <div class='detail-row'><span>Payment ID:</span> $payment_id</div>
                         <div class='detail-row'><span>Date of Registration:</span> " . date('Y-m-d') . "</div>
                     </div>
                 </div>
@@ -97,17 +98,7 @@ function sendRegistrationEmail($toEmail, $toName, $register_user_id, $registrati
 }
 
 // DB connection
-$host = "localhost";
-$user = "root"; // change to your DB username
-$pass = ""; // change to your DB password
-$dbname = "testproject"; // change to your database name
-
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["success" => false, "message" => "Database connection failed"]);
-    exit();
-}
+include "db.php";
 
 // Get raw input data
 $input = json_decode(file_get_contents("php://input"), true);
@@ -123,6 +114,7 @@ $phone = trim($input['phone'] ?? '');
 $state = intval($input['state'] ?? 0);
 $city = intval($input['city'] ?? 0);
 $source = trim($input["source"]);
+$payment_id = trim($input["payment_id"] ?? '');
 $combined_input = $name . $email . $phone . $state . $city . $source;
 
 // Generate a unique hash from the combined string.
@@ -146,37 +138,20 @@ if (!preg_match('/^[0-9]{10}$/', $phone)) {
     echo json_encode(["success" => false, "message" => "Phone number must be 10 digits"]);
     exit();
 }
-
-// Check if email already exists
-$stmt = $conn->prepare("SELECT id FROM event_registrations WHERE email = ? OR phone = ?");
-$stmt->bind_param("ss", $email, $phone);
-$stmt->execute();
-$stmt->store_result();
-
-if ($stmt->num_rows > 0) {
-    http_response_code(409);
-    echo json_encode(["success" => false, "message" => "This email or contact  already registered"]);
-    $stmt->close();
-    $conn->close();
-    exit();
-}
-$stmt->close();
-
 // Insert new record
-$stmt = $conn->prepare("INSERT INTO event_registrations (name, email, phone, state_id, city_id, source,register_user_id) VALUES (?, ?, ?, ?, ?, ?,?)");
-$stmt->bind_param("sssiiss", $name, $email, $phone, $state, $city, $source, $register_user_id);
+$stmt = $conn->prepare("INSERT INTO event_registrations (name, email, phone, state_id, city_id, source,register_user_id,payment_id) VALUES (?, ?, ?, ?, ?, ?,?,?)");
+$stmt->bind_param("sssiisss", $name, $email, $phone, $state, $city, $source, $register_user_id, $payment_id);
 
 if ($stmt->execute()) {
     $registration_id = $stmt->insert_id;
 
     // Send the email using the PHPMailer function
-    $mail_sent = sendRegistrationEmail($email, $name, $register_user_id, $registration_id);
+    $mail_sent = sendRegistrationEmail($email, $name, $register_user_id, $registration_id,$payment_id);
 
     echo json_encode([
         "success" => true,
-        "message" => $mail_sent ? "Registration successful. Ticket sent to your email." : "Registration successful, but ticket email failed to send.",
-        "email_sent" => $mail_sent,
-        "registration_id" => $register_user_id
+        "message" => "Registration successful. Ticket sent to your email.if you dont receive email within 5-10 minutes please contact franmaxindia"
+
     ]);
 } else {
     // Registration failed

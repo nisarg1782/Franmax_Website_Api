@@ -21,7 +21,7 @@ try {
             ii.comment,
             ii.updated_at
         FROM investor_inquiries ii
-        LEFT JOIN brands b ON b.id = ii.brand_id
+        LEFT JOIN registred_user b ON b.id = ii.brand_id
         ORDER BY ii.inquiry_date DESC
     ";
 

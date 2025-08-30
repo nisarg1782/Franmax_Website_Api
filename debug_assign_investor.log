@@ -126,3 +126,19 @@ Array
     [brand_id] => 4
 )
 
+--- 2025-08-30 09:18:06 --- Raw Input:
+{"name":"nisarg","phone":"9913813366","email":"n@gmail.com","state":"Andaman and Nicobar Islands","state_id":"1","city":"Alang","city_id":"785","message":"sasasasasa","brand_id":"23"}
+Decoded Data (Success):
+Array
+(
+    [name] => nisarg
+    [phone] => 9913813366
+    [email] => n@gmail.com
+    [state] => Andaman and Nicobar Islands
+    [state_id] => 1
+    [city] => Alang
+    [city_id] => 785
+    [message] => sasasasasa
+    [brand_id] => 23
+)
+

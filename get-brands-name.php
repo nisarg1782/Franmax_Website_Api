@@ -6,7 +6,7 @@ header("Content-Type: application/json; charset=UTF-8");
 
 include "db.php";
 
-$sql = "SELECT id, name AS brand_name FROM brands";
+$sql = "SELECT id, name AS brand_name FROM registred_user where user_type = 'brand' AND status = 'active'";
 
 $result = $conn->query($sql);
 
