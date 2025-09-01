@@ -16,7 +16,11 @@ $servername = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
 $username   = $_ENV['DB_USERNAME'] ?? getenv('DB_USERNAME') ?: 'root';
 $password   = $_ENV['DB_PASSWORD'] ?? getenv('DB_PASSWORD') ?: '';
 // $dbname = $_ENV['DB_NAME'] ?? 'testproject';
+<<<<<<< Updated upstream
 $dbname     = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'franmaxindia';
+=======
+$dbname     = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'testproject';
+>>>>>>> Stashed changes
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
