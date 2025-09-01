@@ -1,0 +1,11 @@
+# Reduce Docker build context
+.git
+.gitignore
+node_modules
+vendor
+uploads
+.env
+.env.*
+logs
+*.log
+*.log.*
