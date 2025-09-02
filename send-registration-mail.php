@@ -3,12 +3,11 @@
 // You must have PHPMailer installed. You can install it via Composer:
 // composer require phpmailer/phpmailer
 
+// Load DB bootstrap (also loads Composer autoload and .env via phpdotenv if available)
+require_once __DIR__ . '/db.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
-// Load Composer's autoloader
-// This path assumes the script is in the same directory as the 'vendor' folder.
-require 'vendor/autoload.php';
 
 /**
  * Sends a welcome email with attachments to a newly registered user.
@@ -23,24 +22,31 @@ function sendRegistrationEmail($toEmail, $toName, $attachments = []) {
     $mail = new PHPMailer(true);
 
     try {
-        // --- Server settings (Updated for Gmail) ---
+        // --- Server settings (from environment) ---
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';             // Gmail's SMTP server
         $mail->SMTPAuth   = true;
 
-        // Use your Gmail address as the username
-        $mail->Username   = 'nisargt1782@gmail.com';
+        $smtpHost = $_ENV['SMTP_HOST'] ?? getenv('SMTP_HOST') ?: 'sandbox.smtp.mailtrap.io';
+        $smtpUser = $_ENV['SMTP_USERNAME'] ?? getenv('SMTP_USERNAME') ?: '';
+        $smtpPass = $_ENV['SMTP_PASSWORD'] ?? getenv('SMTP_PASSWORD') ?: '';
+        $smtpPort = (int)($_ENV['SMTP_PORT'] ?? getenv('SMTP_PORT') ?: 2525);
+        $smtpSecure = strtolower($_ENV['SMTP_SECURE'] ?? getenv('SMTP_SECURE') ?: 'tls'); // tls|ssl|none
 
-        // IMPORTANT: Use an App Password here, NOT your regular Gmail password.
-        // You can generate one from your Google Account settings.
-        $mail->Password   = 'mxfddbrntybxwrap';
-
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $mail->Host = $smtpHost;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->Port = $smtpPort;
+        if ($smtpSecure === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($smtpSecure === 'tls') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
 
         // --- Recipients ---
-        // For security, the 'From' address must match the authenticated 'Username'.
-        $mail->setFrom('nisargt1782@gmail.com', 'Franmax India');
+        // Prefer explicit SMTP_FROM/SMTP_FROM_NAME; fallback to SMTP_USERNAME
+        $fromEmail = $_ENV['SMTP_FROM'] ?? getenv('SMTP_FROM') ?: ($smtpUser ?: 'no-reply@example.com');
+        $fromName  = $_ENV['SMTP_FROM_NAME'] ?? getenv('SMTP_FROM_NAME') ?: 'Franmax India';
+        $mail->setFrom($fromEmail, $fromName);
 
         // Setting the recipient from the function parameters
         $mail->addAddress($toEmail, $toName);

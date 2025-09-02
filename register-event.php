@@ -1,4 +1,7 @@
 <?php
+// Load DB bootstrap (autoload + .env via phpdotenv if available)
+require_once __DIR__ . '/db.php';
+
 // Set headers to allow cross-origin requests and specify JSON content type
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -15,28 +18,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Load Composer's autoloader for PHPMailer
-require 'vendor/autoload.php';
+// Composer autoload is already handled in db.php if available
 
 // Function to send the registration ticket email using PHPMailer
-function sendRegistrationEmail($toEmail, $toName, $register_user_id, $registrationId,$payment_id)
+function sendRegistrationEmail($toEmail, $toName, $register_user_id, $registrationId, $payment_id)
 {
     $mail = new PHPMailer(true);
 
     try {
-        // Server settings
+        // Server settings from environment
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        // Use your Gmail address as the username
-        $mail->Username   = 'franmaxindia@gmail.com';
-        // IMPORTANT: Use an App Password here, NOT your regular Gmail password.
-        $mail->Password   = 'fpwrraeodhdciqik';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $smtpHost = $_ENV['SMTP_HOST'] ?? getenv('SMTP_HOST') ?: 'sandbox.smtp.mailtrap.io';
+        $smtpUser = $_ENV['SMTP_USERNAME'] ?? getenv('SMTP_USERNAME') ?: '';
+        $smtpPass = $_ENV['SMTP_PASSWORD'] ?? getenv('SMTP_PASSWORD') ?: '';
+        $smtpPort = (int)($_ENV['SMTP_PORT'] ?? getenv('SMTP_PORT') ?: 2525);
+        $smtpSecure = strtolower($_ENV['SMTP_SECURE'] ?? getenv('SMTP_SECURE') ?: 'tls'); // tls|ssl|none
+        $mail->Host = $smtpHost;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->Port = $smtpPort;
+        if ($smtpSecure === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($smtpSecure === 'tls') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
 
         // Recipients
-        $mail->setFrom('franmaxindia@gmail.com', 'Franmax India');
+        $fromEmail = $_ENV['SMTP_FROM'] ?? getenv('SMTP_FROM') ?: ($smtpUser ?: 'no-reply@example.com');
+        $fromName  = $_ENV['SMTP_FROM_NAME'] ?? getenv('SMTP_FROM_NAME') ?: 'Franmax India';
+        $mail->setFrom($fromEmail, $fromName);
         $mail->addAddress($toEmail, $toName);
 
         // Content
