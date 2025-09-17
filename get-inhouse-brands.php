@@ -44,23 +44,13 @@ $sql = "SELECT
     b.remark,
     b.assined_to,  -- include this column
     b.status,
-    mc.mas_cat_name AS masterCategoryName,
-    c.cat_name AS categoryName,
-    sc.subcat_name AS subCategoryName,
-    s.name AS stateName,
-    ct.name AS cityName
+    b.masterCategory AS masterCategory,
+    b.category AS category,
+    b.subCategory AS subCategory,
+    b.state AS stateName,
+    b.city AS cityName
 FROM
     inhouse_brands AS b
-LEFT JOIN
-    master_category AS mc ON b.masterCategory = mc.mas_cat_id
-LEFT JOIN
-    category AS c ON b.category = c.cat_id
-LEFT JOIN
-    subcategory AS sc ON b.subCategory = sc.subcat_id
-LEFT JOIN
-    states AS s ON b.state = s.id
-LEFT JOIN
-    cities AS ct ON b.city = ct.id
 ";
 
 // 🔹 Filter if user_id is provided
@@ -68,7 +58,6 @@ if ($user_id > 0) {
     $sql .= " WHERE b.assined_to = $user_id";
 }
 
-$sql .= " ORDER BY b.id DESC";
 
 $result = $conn->query($sql);
 

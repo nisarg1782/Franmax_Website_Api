@@ -33,17 +33,20 @@ if (!isset($data['id']) || empty($data['id'])) {
 
 // Allowed fields
 $allowed = [
+    "subCategory" => "s",
+    "category" => "s",
+    "masterCategory" => "s",
     "callDate"     => "s",
     "callTime"     => "s",
     "callRemark"   => "s",
     "meetingDate"  => "s",
     "meetingTime"  => "s",
-    "meetingRemark"=> "s",
+    "meetingRemark" => "s",
     "product"      => "s",
     "offerPrice"   => "d",
     "counterPrice" => "d",
     "remark"       => "s",
-    "status"=>"s"
+    "status" => "s"
 ];
 
 // Build query dynamically
